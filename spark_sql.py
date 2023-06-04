@@ -21,59 +21,35 @@ output = args.output
 
 
 spark = SparkSession.builder \
-    .master('spark://Nguyen-Duc-Trung.:7077') \
-    .appName('test') \
+    .appName('test-submit') \
     .getOrCreate()
 
 df_green = spark.read.parquet(input_green)
-
 df_green = df_green \
     .withColumnRenamed('lpep_pickup_datetime', 'pickup_datetime') \
     .withColumnRenamed('lpep_dropoff_datetime', 'dropoff_datetime')
 
 df_yellow = spark.read.parquet(input_yellow)
-
-
 df_yellow = df_yellow \
     .withColumnRenamed('tpep_pickup_datetime', 'pickup_datetime') \
     .withColumnRenamed('tpep_dropoff_datetime', 'dropoff_datetime')
 
 
-common_colums = [
-    'VendorID',
-    'pickup_datetime',
-    'dropoff_datetime',
-    'store_and_fwd_flag',
-    'RatecodeID',
-    'PULocationID',
-    'DOLocationID',
-    'passenger_count',
-    'trip_distance',
-    'fare_amount',
-    'extra',
-    'mta_tax',
-    'tip_amount',
-    'tolls_amount',
-    'improvement_surcharge',
-    'total_amount',
-    'payment_type',
-    'congestion_surcharge'
-]
-
+common_columns = list(set(df_green.columns).intersection(set(df_yellow.columns)))
 
 
 df_green_sel = df_green \
-    .select(common_colums) \
+    .select(common_columns) \
     .withColumn('service_type', F.lit('green'))
 
 df_yellow_sel = df_yellow \
-    .select(common_colums) \
+    .select(common_columns) \
     .withColumn('service_type', F.lit('yellow'))
 
 
 df_trips_data = df_green_sel.unionAll(df_yellow_sel)
 
-df_trips_data.createGlobalTempView('trips_data')
+df_trips_data.createOrReplaceTempView("trips_data")
 
 
 df_result = spark.sql("""
@@ -103,8 +79,7 @@ GROUP BY
 """)
 
 
-df_result.coalesce(1) \
-    .write.parquet(output, mode='overwrite')
+df_result.coalesce(1).write.parquet(output, mode='overwrite')
 
 
 
