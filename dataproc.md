@@ -20,7 +20,7 @@
 
 gcloud dataproc jobs submit pyspark \
     --cluster=cluster-17e3 \
-    --region=asia-southeast1 \
+    --region=asia-southeast1	\
     --jars=gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar \
     gs://de-zoomcamp-week2-hw/script/spark_sql_bigquery.py  \
     -- \
